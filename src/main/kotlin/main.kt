@@ -4,8 +4,8 @@ import java.io.File
 
 fun main(args: Array<String>) {
 
-    val fileName: String =
-        "/Volumes/Macintosh HD 1/Users/antonov/RecommenderProjects/Kotlin/StreamsBlendingRecommender/src/main/resources/RandomGoods-dfSMRMatrix.csv"
+    val path = System.getProperty("user.dir")
+    val fileName: String = path + "/src/main/resources/RandomGoods-dfSMRMatrix.csv"
     val smrDataFile = File(fileName)
 
     val sbr = CoreSBR()
