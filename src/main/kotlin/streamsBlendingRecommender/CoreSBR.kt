@@ -30,6 +30,9 @@ class CoreSBR() : AbstractSBR {
     //========================================================
     // Clone
     //========================================================
+    /**
+     * Deep copy.
+     */
     fun clone(): CoreSBR {
         val sbr = CoreSBR()
         sbr.smrMatrix = this.smrMatrix
@@ -49,6 +52,17 @@ class CoreSBR() : AbstractSBR {
     //========================================================
     // Ingest a SMR matrix CSV file
     //========================================================
+    /**
+     * Ingest a CSV file representing a Sparse Matrix Recommender (SMR) matrix.
+     *
+     * @param fileName File name.
+     * @param itemColumnName Name of the column with items.
+     * @param tagTypeColumnName Name of the column tag types.
+     * @param valueColumnName Name of the column values (i.e. tags.)
+     * @param weightColumnName Name of the column with item-value weights.
+     * @param make Should the (tag) inverse indexes be create or not?
+     * @return Is the ingestion successful or not?
+     */
     fun ingestSMRMatrixCSVFile(
         fileName: String,
         itemColumnName: String = "Item",
@@ -96,6 +110,10 @@ class CoreSBR() : AbstractSBR {
     //========================================================
     //  Make tag inverse indexes
     //========================================================
+    /**
+     * Make tag inverse indexes.
+     * These indexes (hash-maps) correspond to the columns of a sparse matrix.
+     */
     fun makeTagInverseIndexes(): Boolean {
 
         // Split into a hash by tag type.
@@ -136,6 +154,11 @@ class CoreSBR() : AbstractSBR {
     //========================================================
     // Transpose tag inverse indexes
     //========================================================
+    /**
+     * Transpose the tag inverse indexes into item inverse indexes.
+     * This operation corresponds to changing the representation of sparse matrix
+     * from column major to row major format.
+     */
     fun transposeTagInverseIndexes(): Boolean {
 
         // Transpose tag inverse indexes into item inverse indexes.
@@ -164,6 +187,16 @@ class CoreSBR() : AbstractSBR {
     //========================================================
     // Profile
     //========================================================
+    /**
+     * Compute profile for an array of items.
+     * Makes a map from the array and delegates to the corresponding overloaded version.
+     *
+     * @param items An string array of items.
+     * @param normalize A Boolean: should the recommendations be normalized or not?
+     * @param warn A Boolean: should warning messages be given or not?
+     * @return A list of string-double pairs sorted in descending order of their values.
+     * @see profile
+     */
     fun profile(
         items: Array<String>,
         normalize: Boolean = false,
@@ -177,6 +210,14 @@ class CoreSBR() : AbstractSBR {
         return this.profile(scoredItems, normalize, warn)
     }
 
+    /**
+     * Compute profile for scored items.
+     *
+     * @param items An string array of items.
+     * @param normalize A Boolean: should the recommendations be normalized or not?
+     * @param warn A Boolean: should warning messages be given or not?
+     * @return A list of string-double pairs sorted in descending order of their values.
+     */
     fun profile(
         items: Map<String, Double>,
         normalize: Boolean = false,
@@ -224,6 +265,17 @@ class CoreSBR() : AbstractSBR {
     //========================================================
     // Recommend by history
     //========================================================
+    /**
+     * Compute recommendations by array items.
+     * Makes a map from the array and delegates to the corresponding overloaded version.
+     *
+     * @param items An string array of items.
+     * @param nrecs A positive integer for the (maximum) number of recommendations.
+     * @param normalize A Boolean: should the recommendations be normalized or not?
+     * @param warn A Boolean: should warning messages be given or not?
+     * @return A list of string-double pairs sorted in descending order of their values.
+     * @see recommend
+     */
     fun recommend(
         items: Array<String>,
         nrecs: Int = 12,
@@ -238,6 +290,17 @@ class CoreSBR() : AbstractSBR {
         return this.recommend(scoredItems, nrecs, normalize, warn)
     }
 
+    /**
+     * Compute recommendations by array items.
+     * Makes a profile and delegates to recommendByProfile.
+     *
+     * @param items An string-double (hash-)map of scored items.
+     * @param nrecs A positive integer for the (maximum) number of recommendations.
+     * @param normalize A Boolean: should the recommendations be normalized or not?
+     * @param warn A Boolean: should warning messages be given or not?
+     * @return A list of string-double pairs sorted in descending order of their values.
+     * @see recommendByProfile
+     */
     fun recommend(
         items: Map<String, Double>,
         nrecs: Int = 12,
@@ -255,6 +318,17 @@ class CoreSBR() : AbstractSBR {
     //========================================================
     // Recommend by profile
     //========================================================
+    /**
+     * Compute recommendations by array profile.
+     * Makes a map from the array and delegates to the corresponding overloaded version.
+     *
+     * @param prof An string array of tags.
+     * @param nrecs A positive integer for the (maximum) number of recommendations.
+     * @param normalize A Boolean: should the recommendations be normalized or not?
+     * @param warn A Boolean: should warning messages be given or not?
+     * @return A list of string-double pairs sorted in descending order of their values.
+     * @see recommendByProfile
+     */
     fun recommendByProfile(
         prof: Array<String>,
         nrecs: Int = 12,
@@ -269,6 +343,15 @@ class CoreSBR() : AbstractSBR {
         return this.recommendByProfile(scoredTags, nrecs, normalize, warn)
     }
 
+    /**
+     * Compute recommendations by profile.
+     *
+     * @param prof A (hash-)map that is a profile. The keys are tags, the values are scores.
+     * @param nrecs A positive integer for the (maximum) number of recommendations.
+     * @param normalize A Boolean: should the recommendations be normalized or not?
+     * @param warn A Boolean: should warning messages be given or not?
+     * @return A list of string-double pairs sorted in descending order of their values.
+     */
     fun recommendByProfile(
         prof: Map<String, Double>,
         nrecs: Int = 12,
@@ -319,6 +402,15 @@ class CoreSBR() : AbstractSBR {
 //========================================================
 // Inverse index merging functions
 //========================================================
+/**
+ * This function merges two (hash-)maps into a third one.
+ * The two hash-maps are converted into sequences then the merge/sum of values
+ * is done using a group-by operation over the keys and summation for each group.
+ *
+ * @param first A (hash-)map.
+ * @param second A (hash-)map.
+ * @return A (hash-)map.
+ */
 fun myMerge(first: Map<String?, Double?>, second: Map<String?, Double?>): Map<String?, Double?> {
     return (first.asSequence() + second.asSequence())
         .groupBy({ it.key!! }, { it.value!! })
