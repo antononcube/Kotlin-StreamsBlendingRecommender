@@ -409,7 +409,7 @@ class CoreSBR() : AbstractSBR() {
 
         // Find norms per tag type.
         // Here for each tagType we find the corresponding norm.
-        // For each tagType we gatter and flatten the corresponding tag-item weights.
+        // For each tagType we gather and flatten the corresponding tag-item weights.
         // Then we find the norm of that (flattened) vector.
         var norms: Map<String, Double> = mutableMapOf()
         for (kv in this.tagTypeToTags.asSequence()) {
