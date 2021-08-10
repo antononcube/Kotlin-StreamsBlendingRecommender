@@ -2,9 +2,10 @@ package streamsBlendingRecommender
 
 import com.github.doyaaaaaken.kotlincsv.dsl.csvReader
 import java.io.File
+import java.util.function.DoubleBinaryOperator
 import kotlin.math.*
 
-class CoreSBR() : AbstractSBR {
+class CoreSBR() : AbstractSBR() {
 
     //========================================================
     // Data members
@@ -23,9 +24,7 @@ class CoreSBR() : AbstractSBR {
     //========================================================
     // Getters
     //========================================================
-    override fun getValue(): AbstractSBR {
-        return this;
-    }
+
 
     //========================================================
     // Clone
@@ -382,7 +381,8 @@ class CoreSBR() : AbstractSBR {
             }
 
         // Reduce the maps of maps into one map by adding the weights that correspond to the same keys
-        var profMix: Map<String, Double> = mapOf<String, Double>().mergeReduce( { a, b -> a + b}, weightedTagIndexes.map{it.second} as List<Map<String, Double>> )
+        var profMix: Map<String, Double> = mapOf<String, Double>().mergeReduce({ a, b -> a + b },
+            weightedTagIndexes.map { it.second } as List<Map<String, Double>>)
 
         // Timing comparisons would be nice:
         //        var profMix: Map<String?, Double?> =
@@ -397,7 +397,55 @@ class CoreSBR() : AbstractSBR {
         // Result
         return res.take(min(nrecs, res.size))
     }
+
+    //========================================================
+    // Normalize per tag type
+    //========================================================
+    /**
+     * Normalize the inverse indexes per tag type.
+     * @param normSpec Norm specification. @see UtilityFunctions::norm.
+     */
+    fun normalizePerTagType(normSpec: String) {
+
+        // Find norms per tag type.
+        // Here for each tagType we find the corresponding norm.
+        // For each tagType we gatter and flatten the corresponding tag-item weights.
+        // Then we find the norm of that (flattened) vector.
+        var norms: Map<String, Double> = mutableMapOf()
+        for (kv in this.tagTypeToTags.asSequence()) {
+            val tags: List<String?> = kv.value.toList()
+            val norm = this.norm( tags.flatMap{ this.tagInverseIndexes[it]!!.values } as Collection<Double>, normSpec)
+            norms = norms.plus(Pair(kv.key!!, norm))
+        }
+
+        // Invert tag type to tag hash.
+        // Here we convert a map-of-sets (tagType -> tags) into a map, tag -> tagType.
+        // Basically, we flatten the inverted rules.
+        var tagToTagType: Map<String, String> = mutableMapOf()
+        for (kv in this.tagTypeToTags.asSequence()) {
+            val tt = kv.value.toList().map { Pair(it, kv.key) }
+            tagToTagType = tagToTagType.plus(tt) as Map<String, String>
+        }
+
+        // Normalize.
+        // Here we normalize each of tag inverse indexes with the norms of
+        // the corresponding tagType.
+        // This should be done in place.
+        var tagInverseIndexesNew: Map<String?, Map<String?, Double?>> = this.tagInverseIndexes;
+        this.tagInverseIndexes = mutableMapOf()
+        for (kv in tagInverseIndexesNew.asSequence()) {
+            val norm: Double? = norms[tagToTagType[kv.key]];
+            if (norm != null && norm > 0) {
+                val ttmap : Map<String?, Double?> = kv.value.map { it.key to it.value?.div(norm) }.toMap()
+                this.tagInverseIndexes  = this.tagInverseIndexes .plus(Pair(kv.key, ttmap)) as Map<String?, Map<String?, Double?>>
+            }
+        }
+
+        // We make sure item inverse indexes are empty.
+        this.itemInverseIndexes = mutableMapOf()
+    }
 }
+
 
 //========================================================
 // Inverse index merging functions
