@@ -252,7 +252,7 @@ class CoreSBR() : AbstractSBR() {
 
         // Reduce the maps of maps into one map by adding the weights that correspond to the same keys
         var itemMix: Map<String?, Double?> =
-            weightedItemIndexes.fold(mapOf<String?, Double?>()) { acc, index -> myMerge(acc, index.second!!) }
+            weightedItemIndexes.fold(mapOf<String?, Double?>()) { acc, index -> this.myMerge(acc, index.second!!) }
 
         // Normalize
         //if ( normalize ) { itemMix = this.normalize( itemMix, "max-norm") }
@@ -386,7 +386,7 @@ class CoreSBR() : AbstractSBR() {
 
         // Timing comparisons would be nice:
         //        var profMix: Map<String?, Double?> =
-        //            weightedTagIndexes.fold(mapOf<String?, Double?>()) { acc, index -> myMerge(acc, index.second!!) }
+        //            weightedTagIndexes.fold(mapOf<String?, Double?>()) { acc, index -> this.myMerge(acc, index.second!!) }
 
         // Normalize
         //if ( normalize ) { itemMix = this.normalize( itemMix, "max-norm") }
@@ -445,29 +445,3 @@ class CoreSBR() : AbstractSBR() {
         this.itemInverseIndexes = mutableMapOf()
     }
 }
-
-
-//========================================================
-// Inverse index merging functions
-//========================================================
-/**
- * This function merges two (hash-)maps into a third one.
- * The two hash-maps are converted into sequences then the merge/sum of values
- * is done using a group-by operation over the keys and summation for each group.
- *
- * @param first A (hash-)map.
- * @param second A (hash-)map.
- * @return A (hash-)map.
- */
-fun myMerge(first: Map<String?, Double?>, second: Map<String?, Double?>): Map<String?, Double?> {
-    return (first.asSequence() + second.asSequence())
-        .groupBy({ it.key!! }, { it.value!! })
-        .mapValues { it.value.sum() }
-}
-
-
-fun <K, V> Map<K, V>.mergeReduce(reduce: (V, V) -> V, others: List<Map<K, V>>): Map<K, V> =
-    this.toMutableMap().apply { others.forEach { other -> other.forEach { merge(it.key, it.value, reduce) } } }
-
-fun <K, V> MutableMap<K, V>.mergeReduceInPlace(reduce: (V, V) -> V, others: List<Map<K, V>>) =
-    others.forEach { other -> other.forEach { merge(it.key, it.value, reduce) } }
