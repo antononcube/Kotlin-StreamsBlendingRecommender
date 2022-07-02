@@ -121,7 +121,7 @@ class CoreSBR() : AbstractSBR() {
         // For each tag type split into hash by Value.
         var inverseIndexesPerTagType = inverseIndexGroups.mapValues { it0 -> it0.value.groupBy { it["Value"] } }
 
-        // Re-make each array of hashes into a hash.
+        // Re-make each array of hashes into an item-to-weight hash.
         // println( inverseIndexesPerTagType.mapValues{ typeRec -> typeRec.value.mapValues{ it.value.size } } )
 
         var inverseIndexesPerTagType2 = inverseIndexesPerTagType.mapValues { typeRec ->
